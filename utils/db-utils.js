@@ -21,7 +21,22 @@ const getUser = async (username) => {
   return usersDb.findOne({ username });
 };
 
+const transferFunds = async (senderUsername, receiverUsername, amount) => {
+  const sender = await getUser(senderUsername);
+  const receiver = await getUser(receiverUsername);
+  sender.currentBalance -= amount;
+  receiver.currentBalance += amount;
+  await usersDb.updateOne(
+    { username: senderUsername },
+    { $set: { currentBalance: sender.currentBalance } }
+  );
+  await usersDb.updateOne(
+    { username: receiverUsername },
+    { $set: { currentBalance: receiver.currentBalance } }
+  );
+};
 module.exports = {
   createUser,
   getUser,
+  transferFunds,
 };
