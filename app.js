@@ -25,7 +25,7 @@ app.post("/create-user", async (req, res) => {
   // create the random seed value
   console.log("Creating user:", req.body);
   const user = req.body;
-  user.seed = crypto.getSeed();
+  user.seed = crypto.getSeed().toString();
   user.password = await crypto.hashData(user.password);
   user.latestTransactionTimestamp = 0;
   user.currentBalance = 200;
@@ -36,6 +36,7 @@ app.post("/create-user", async (req, res) => {
 app.post("/login", async (req, res) => {
   const user = req.body;
   const dbUser = await db.getUser(user.username);
+  console.log(dbUser);
   if (!dbUser) {
     res.status(404).send({ error: "User not found" });
     return;
@@ -43,7 +44,7 @@ app.post("/login", async (req, res) => {
     if (await crypto.isHashCorrect(user.password, dbUser.password)) {
       const { username, firstName, lastName } = dbUser;
       const userDetails = { username, firstName, lastName };
-      res.send({ jwt: crypto.generateJWT(userDetails) });
+      res.send({ jwt: crypto.generateJWT(userDetails), seed: dbUser.seed });
       return;
     } else {
       res.status(401).send({ error: "Incorrect password" });
