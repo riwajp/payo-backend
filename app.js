@@ -57,7 +57,8 @@ app.post("/initiate-transfer", authMiddleware, async (req, res) => {
     console.log("User", req.user);
     console.log("Body", req.body);
 
-    const { encryptedTransactionData, transactionHash, receiverUsername } = req.body;
+    const { encryptedTransactionData, transactionHash, receiverUsername } =
+      req.body;
 
     // Fetch sender's seed from database
     const senderUser = await db.getUser(req.user.username);
@@ -77,7 +78,10 @@ app.post("/initiate-transfer", authMiddleware, async (req, res) => {
     }
 
     // Verify transaction integrity
-    const transactionValid = await crypto.verifyTransaction(transactionData, transactionHash);
+    const transactionValid = await crypto.verifyTransaction(
+      transactionData,
+      transactionHash
+    );
     if (!transactionValid) {
       return res.status(400).json({ error: "Transaction verification failed" });
     }
@@ -100,13 +104,13 @@ app.post("/initiate-transfer", authMiddleware, async (req, res) => {
   }
 });
 
-// AES decryption function 
+// AES decryption function
 function decryptData(encryptedData, seed) {
   try {
     const key = crypto.createHash("sha256").update(seed).digest(); // Derive a 256-bit key from seed
-    const decipher = crypto.createDecipheriv('aes-256-ecb', key, null); // AES-ECB mode does not require an IV
-    let decrypted = decipher.update(encryptedData, 'base64', 'utf8');
-    decrypted += decipher.final('utf8');
+    const decipher = crypto.createDecipheriv("aes-256-ecb", key, null); // AES-ECB mode does not require an IV
+    let decrypted = decipher.update(encryptedData, "base64", "utf8");
+    decrypted += decipher.final("utf8");
     return JSON.parse(decrypted);
   } catch (error) {
     console.error("Decryption error:", error);
@@ -119,4 +123,11 @@ app.get("/get-balance", authMiddleware, async (req, res) => {
   const balance = user.currentBalance;
   console.log(balance);
   res.send({ balance: balance });
+});
+
+app.get("/get-transactions", authMiddleware, async (req, res) => {
+  const transactions = await db.getTransactions(req.user.username);
+
+  console.log(transactions);
+  res.send({ transactions: transactions });
 });

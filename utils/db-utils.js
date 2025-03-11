@@ -7,6 +7,7 @@ const client = new MongoClient(uri);
 
 const db = client.db("payo-database");
 const usersDb = db.collection("users");
+const transactionsDb = db.collection("transactions");
 
 client.connect();
 
