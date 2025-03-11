@@ -53,27 +53,66 @@ app.post("/login", async (req, res) => {
 });
 
 app.post("/initiate-transfer", authMiddleware, async (req, res) => {
-  console.log("User", req.user);
-  console.log("Body", req.body);
-  const { transactionData, transactionHash, receiverUsername } = req.body;
-  const transactionStatus = await crypto.verifyTransaction(
-    transactionData,
-    transactionHash
-  );
+  try {
+    console.log("User", req.user);
+    console.log("Body", req.body);
 
-  if (transactionStatus.error) {
-    console.log(transactionStatus.error);
-    res.status(400).send({ error: "Transaction failed" });
-    return;
+    const { encryptedTransactionData, transactionHash, receiverUsername } = req.body;
+
+    // Fetch sender's seed from database
+    const senderUser = await db.getUser(req.user.username);
+    if (!senderUser) {
+      return res.status(404).json({ error: "Sender not found" });
+    }
+
+    const seed = senderUser.seed; // Get the stored seed
+    if (!seed) {
+      return res.status(400).json({ error: "Encryption key (seed) missing" });
+    }
+
+    // Decrypt the encrypted transaction data using the seed
+    const transactionData = decryptData(encryptedTransactionData, seed);
+    if (!transactionData) {
+      return res.status(400).json({ error: "Invalid transaction data" });
+    }
+
+    // Verify transaction integrity
+    const transactionValid = await crypto.verifyTransaction(transactionData, transactionHash);
+    if (!transactionValid) {
+      return res.status(400).json({ error: "Transaction verification failed" });
+    }
+
+    // Perform fund transfer
+    const transferResult = await db.transferFunds(
+      transactionData.username,
+      receiverUsername,
+      transactionData.amount
+    );
+
+    if (transferResult.error) {
+      return res.status(400).json({ error: "Transfer failed" });
+    }
+
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error("Error processing transaction:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
-
-  await db.transferFunds(
-    transactionData.username,
-    receiverUsername,
-    transactionData.amount
-  );
-  res.send({ error: false });
 });
+
+// AES decryption function 
+function decryptData(encryptedData, seed) {
+  try {
+    const key = crypto.createHash("sha256").update(seed).digest(); // Derive a 256-bit key from seed
+    const decipher = crypto.createDecipheriv('aes-256-ecb', key, null); // AES-ECB mode does not require an IV
+    let decrypted = decipher.update(encryptedData, 'base64', 'utf8');
+    decrypted += decipher.final('utf8');
+    return JSON.parse(decrypted);
+  } catch (error) {
+    console.error("Decryption error:", error);
+    return null;
+  }
+}
 
 app.get("/get-balance", authMiddleware, async (req, res) => {
   const user = await db.getUser(req.user.username);
