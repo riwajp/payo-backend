@@ -52,4 +52,5 @@ module.exports = {
   createUser,
   getUser,
   transferFunds,
+  getTransactions,
 };

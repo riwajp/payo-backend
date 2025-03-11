@@ -5,6 +5,8 @@ const cors = require("cors");
 //utilities functions and middleware files=========================================
 const db = require("./utils/db-utils");
 const crypto = require("./utils/crypto-utils");
+const cryptoModule = require("crypto");
+
 require("dotenv").config();
 
 const authMiddleware = require("./middlewares/authMiddleware"); // Import JWT verification middleware
@@ -52,7 +54,7 @@ app.post("/login", async (req, res) => {
     }
   }
 });
-
+crypto;
 app.post("/initiate-transfer", authMiddleware, async (req, res) => {
   try {
     console.log("User", req.user);
@@ -73,7 +75,7 @@ app.post("/initiate-transfer", authMiddleware, async (req, res) => {
     }
 
     // Decrypt the encrypted transaction data using the seed
-    const transactionData = decryptData(encryptedTransactionData, seed);
+    const transactionData = await decryptData(encryptedTransactionData, seed);
     if (!transactionData) {
       return res.status(400).json({ error: "Invalid transaction data" });
     }
@@ -106,10 +108,10 @@ app.post("/initiate-transfer", authMiddleware, async (req, res) => {
 });
 
 // AES decryption function
-function decryptData(encryptedData, seed) {
+async function decryptData(encryptedData, seed) {
   try {
-    const key = crypto.createHash("sha256").update(seed).digest(); // Derive a 256-bit key from seed
-    const decipher = crypto.createDecipheriv("aes-256-ecb", key, null); // AES-ECB mode does not require an IV
+    const key = await crypto.hashData(seed); // Derive a 256-bit key from seed
+    const decipher = cryptoModule.createDecipheriv("aes-256-ecb", key, null); // AES-ECB mode does not require an IV
     let decrypted = decipher.update(encryptedData, "base64", "utf8");
     decrypted += decipher.final("utf8");
     return JSON.parse(decrypted);
