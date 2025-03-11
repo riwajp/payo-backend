@@ -4,6 +4,7 @@ const verifyJWT = (req, res, next) => {
   const token = req.headers["authorization"]; // Get token from headers
 
   if (!token) {
+    console.log("no token");
     return res
       .status(401)
       .json({ success: false, message: "Access Denied: No token provided" });

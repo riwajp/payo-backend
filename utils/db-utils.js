@@ -24,11 +24,17 @@ const getUser = async (username) => {
 const transferFunds = async (senderUsername, receiverUsername, amount) => {
   const sender = await getUser(senderUsername);
   const receiver = await getUser(receiverUsername);
+  console.log(receiverUsername);
   sender.currentBalance -= amount;
   receiver.currentBalance += amount;
   await usersDb.updateOne(
     { username: senderUsername },
-    { $set: { currentBalance: sender.currentBalance } }
+    {
+      $set: {
+        currentBalance: sender.currentBalance,
+        latestTransactionTimestamp: new Date().getTime(),
+      },
+    }
   );
   await usersDb.updateOne(
     { username: receiverUsername },

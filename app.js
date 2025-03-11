@@ -27,6 +27,8 @@ app.post("/create-user", async (req, res) => {
   const user = req.body;
   user.seed = crypto.getSeed();
   user.password = await crypto.hashData(user.password);
+  user.latestTransactionTimestamp = 0;
+  user.currentBalance = 200;
   await db.createUser(user);
   res.send({ seed: user.seed });
 });
@@ -42,16 +44,18 @@ app.post("/login", async (req, res) => {
       const { username, firstName, lastName } = dbUser;
       const userDetails = { username, firstName, lastName };
       res.send({ jwt: crypto.generateJWT(userDetails) });
+      return;
     } else {
       res.status(401).send({ error: "Incorrect password" });
+      return;
     }
   }
 });
 
 app.post("/initiate-transfer", authMiddleware, async (req, res) => {
-  console.log(req.user);
-  console.log(req.body);
-  const { transactionData, transactionHash, recieverUsername } = req.body;
+  console.log("User", req.user);
+  console.log("Body", req.body);
+  const { transactionData, transactionHash, receiverUsername } = req.body;
   const transactionStatus = await crypto.verifyTransaction(
     transactionData,
     transactionHash
@@ -60,12 +64,20 @@ app.post("/initiate-transfer", authMiddleware, async (req, res) => {
   if (transactionStatus.error) {
     console.log(transactionStatus.error);
     res.status(400).send({ error: "Transaction failed" });
+    return;
   }
 
   await db.transferFunds(
     transactionData.username,
-    recieverUsername,
+    receiverUsername,
     transactionData.amount
   );
-  res.send("Transfer initiated");
+  res.send({ error: false });
+});
+
+app.get("/get-balance", authMiddleware, async (req, res) => {
+  const user = await db.getUser(req.user.username);
+  const balance = user.currentBalance;
+  console.log(balance);
+  res.send({ balance: balance });
 });
