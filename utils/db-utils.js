@@ -21,7 +21,13 @@ const getUser = async (username) => {
 
   return usersDb.findOne({ username });
 };
-
+const getTransactions = async (username) => {
+  return transactionsDb
+    .find({
+      $or: [{ sender: username }, { receiver: username }],
+    })
+    .toArray();
+};
 const transferFunds = async (senderUsername, receiverUsername, amount) => {
   const sender = await getUser(senderUsername);
   const receiver = await getUser(receiverUsername);
