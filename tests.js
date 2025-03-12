@@ -19,7 +19,7 @@ const testTransaction = async () => {
 
   await setTimeout(async () => {
     console.log("Waited for  seconds");
-    const recieverUsername = "riwajprasai";
+    const receiverUsername = "riwajprasai";
 
     const transactionStatus = await crypto.verifyTransaction(
       transactionData,
@@ -34,7 +34,7 @@ const testTransaction = async () => {
   } else {
     await db.transferFunds(
       transactionData.username,
-      recieverUsername,
+      receiverUsername,
       transactionData.amount
     );
   }
