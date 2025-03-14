@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-
+const cryptoModule = require("crypto")
 //
 //utilities functions and middleware files=========================================
 const db = require("./utils/db-utils");
@@ -103,8 +103,8 @@ app.post("/initiate-transfer", authMiddleware, async (req, res) => {
 // AES decryption function 
 function decryptData(encryptedData, seed) {
   try {
-    const key = crypto.createHash("sha256").update(seed).digest(); // Derive a 256-bit key from seed
-    const decipher = crypto.createDecipheriv('aes-256-ecb', key, null); // AES-ECB mode does not require an IV
+    const key = cryptoModule.createHash("sha256").update(seed).digest(); // Derive a 256-bit key from seed
+    const decipher = cryptoModule.createDecipheriv('aes-256-ecb', key, null); // AES-ECB mode does not require an IV
     let decrypted = decipher.update(encryptedData, 'base64', 'utf8');
     decrypted += decipher.final('utf8');
     return JSON.parse(decrypted);
