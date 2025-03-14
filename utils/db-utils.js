@@ -29,17 +29,19 @@ const getTransactions = async (username) => {
     .toArray();
 };
 const transferFunds = async (senderUsername, receiverUsername, amount) => {
+const timestamp=new Date().getTime();
   const sender = await getUser(senderUsername);
   const receiver = await getUser(receiverUsername);
   console.log(receiverUsername);
   sender.currentBalance -= amount;
   receiver.currentBalance += amount;
+  try{
   await usersDb.updateOne(
     { username: senderUsername },
     {
       $set: {
         currentBalance: sender.currentBalance,
-        latestTransactionTimestamp: new Date().getTime(),
+        latestTransactionTimestamp:timestamp ,
       },
     }
   );
@@ -47,6 +49,15 @@ const transferFunds = async (senderUsername, receiverUsername, amount) => {
     { username: receiverUsername },
     { $set: { currentBalance: receiver.currentBalance } }
   );
+
+  await transactionsDb.insertOne({sender:senderUsername,receiver:receiverUsername,amount:amount,timestamp:timestamp})
+
+
+}catch(error){
+  console.log(error);
+  return {error:true};
+}
+  return{}
 };
 module.exports = {
   createUser,

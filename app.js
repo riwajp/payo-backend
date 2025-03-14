@@ -5,7 +5,7 @@ const cors = require("cors");
 //utilities functions and middleware files=========================================
 const db = require("./utils/db-utils");
 const crypto = require("./utils/crypto-utils");
-const cryptoModule = require("crypto");
+const CryptoJS = import("crypto-es").default;
 
 require("dotenv").config();
 
@@ -25,7 +25,7 @@ app.listen(3000, () => {
 //endpoints=========================================
 app.post("/create-user", async (req, res) => {
   // create the random seed value
-  console.log("Creating user:", req.body);
+
   const user = req.body;
   user.seed = crypto.getSeed().toString();
   user.password = await crypto.hashData(user.password);
@@ -38,7 +38,7 @@ app.post("/create-user", async (req, res) => {
 app.post("/login", async (req, res) => {
   const user = req.body;
   const dbUser = await db.getUser(user.username);
-  console.log(dbUser);
+
   if (!dbUser) {
     res.status(404).send({ error: "User not found" });
     return;
@@ -57,16 +57,14 @@ app.post("/login", async (req, res) => {
 crypto;
 app.post("/initiate-transfer", authMiddleware, async (req, res) => {
   try {
-    console.log("User", req.user);
-    console.log("Body", req.body);
-
-    const { encryptedTransactionData, transactionHash, receiverUsername } =
+    const { senderUsername, encryptedData, transactionHash, receiverUsername } =
       req.body;
 
     // Fetch sender's seed from database
-    const senderUser = await db.getUser(req.user.username);
-    if (!senderUser) {
-      return res.status(404).json({ error: "Sender not found" });
+    const receiverUser = await db.getUser(req.user.username);
+    const senderUser = await db.getUser(senderUsername);
+    if (!receiverUser) {
+      return res.status(404).json({ error: "Receiver not found" });
     }
 
     const seed = senderUser.seed; // Get the stored seed
@@ -75,7 +73,7 @@ app.post("/initiate-transfer", authMiddleware, async (req, res) => {
     }
 
     // Decrypt the encrypted transaction data using the seed
-    const transactionData = await decryptData(encryptedTransactionData, seed);
+    const transactionData = await decryptData(encryptedData, seed);
     if (!transactionData) {
       return res.status(400).json({ error: "Invalid transaction data" });
     }
@@ -90,8 +88,15 @@ app.post("/initiate-transfer", authMiddleware, async (req, res) => {
     }
 
     // Perform fund transfer
-    const transferResult = await db.transferFunds(
+    console.log(
+      "hereeeeeeeee",
       transactionData.username,
+      receiverUsername,
+      transactionData.amount
+    );
+
+    const transferResult = await db.transferFunds(
+      senderUsername,
       receiverUsername,
       transactionData.amount
     );
@@ -111,10 +116,18 @@ app.post("/initiate-transfer", authMiddleware, async (req, res) => {
 async function decryptData(encryptedData, seed) {
   try {
     const key = await crypto.hashData(seed); // Derive a 256-bit key from seed
-    const decipher = cryptoModule.createDecipheriv("aes-256-ecb", key, null); // AES-ECB mode does not require an IV
-    let decrypted = decipher.update(encryptedData, "base64", "utf8");
-    decrypted += decipher.final("utf8");
-    return JSON.parse(decrypted);
+
+    // const decipher = cryptoModule.createDecipheriv("aes-256-ecb", key, null); // AES-ECB mode does not require an IV
+    // decipher.setAutoPadding(true); // Enable auto padding
+
+    const decrypted = CryptoJS.AES.decrypt(encryptedData, key, {
+      mode: CryptoJS.mode.ECB,
+      padding: CryptoJS.pad.Pkcs7,
+    });
+
+    return JSON.parse(decrypted.toString(CryptoJS.enc.Utf8));
+    // let decrypted = decipher.update(encryptedData, "base64", "utf8");
+    // decrypted += decipher.final("utf8");
   } catch (error) {
     console.error("Decryption error:", error);
     return null;
@@ -124,13 +137,12 @@ async function decryptData(encryptedData, seed) {
 app.get("/get-balance", authMiddleware, async (req, res) => {
   const user = await db.getUser(req.user.username);
   const balance = user.currentBalance;
-  console.log(balance);
+
   res.send({ balance: balance });
 });
 
 app.get("/get-transactions", authMiddleware, async (req, res) => {
   const transactions = await db.getTransactions(req.user.username);
 
-  console.log(transactions);
   res.send({ transactions: transactions });
 });

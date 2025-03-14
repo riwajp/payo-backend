@@ -9,11 +9,11 @@ const getSeed = () => {
 };
 
 const hashData = async (plainText) => {
-  return sha256.create("sha256").update(plainText).hex().toString();
+  return sha256.create().update(plainText).hex().toString();
 };
 
 const isHashCorrect = async (plainText, hashedText) => {
-  console.log(await hashData(plainText), hashedText);
+
   return (await hashData(plainText)) == hashedText;
 };
 
@@ -28,7 +28,7 @@ const verifyTransaction = async (transactionData, transactionHash) => {
 
   //error checks
   if (!user) return { error: "User not found" };
-
+  console.log("helklo1111");
   if (
     !(await isHashCorrect(
       JSON.stringify({ ...transactionData, seed: user.seed }),
@@ -37,14 +37,17 @@ const verifyTransaction = async (transactionData, transactionHash) => {
   ) {
     return { error: "Incorrect hash" };
   }
-
+  console.log("helklo112222222222211");
   if (transactionData.timestamp > currentTime)
     return { error: "Future timestamp" };
+console.log("helklo11133333333333333331");
 
   if (user.latestTransactionTimestamp >= transactionData.timestamp)
     return { error: "Expired transaction (transaction overridden)" };
 
-  if (currentTime - transactionData.timestamp > 120000)
+  console.log("asssssssssssss",currentTime - transactionData.timestamp )
+
+  if (currentTime - transactionData.timestamp > 15000)
     return { error: "Expired transaction (timestamp expiration)" };
 
   if (user.currentBalance < transactionData.amount)
