@@ -73,6 +73,7 @@ app.post("/initiate-transfer", authMiddleware, async (req, res) => {
 
     // Decrypt the encrypted transaction data using the seed
     const transactionData = await decryptData(encryptedData, seed);
+    console.log(transactionData);
     if (!transactionData) {
       return res.status(400).json({ error: "Invalid transaction data" });
     }
