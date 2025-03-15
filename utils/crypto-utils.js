@@ -20,7 +20,12 @@ const generateJWT = (user) => {
   return jwt.sign(user, process.env.JWT_SECRET);
 };
 
-const verifyTransaction = async (transactionData, transactionHash) => {
+const verifyTransaction = async (
+  encryptedData,
+  transactionData,
+  seed,
+  transactionHash
+) => {
   const currentTime = new Date().getTime();
 
   const user = await db.getUser(transactionData.username);
@@ -28,12 +33,7 @@ const verifyTransaction = async (transactionData, transactionHash) => {
   //error checks
   if (!user) return { error: "User not found" };
   console.log("helklo1111");
-  if (
-    !(await isHashCorrect(
-      JSON.stringify({ ...transactionData, seed: user.seed }),
-      transactionHash
-    ))
-  ) {
+  if (!(await isHashCorrect(encryptedData, transactionHash))) {
     return { error: "Incorrect hash" };
   }
   console.log("helklo112222222222211");

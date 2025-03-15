@@ -80,9 +80,12 @@ app.post("/initiate-transfer", authMiddleware, async (req, res) => {
 
     // Verify transaction integrity
     const transactionValid = await crypto.verifyTransaction(
+      encryptedData,
       transactionData,
+      seed,
       transactionHash
     );
+    console.log(transactionHash);
     console.log(transactionValid.error);
     if (transactionValid.error) {
       return res.status(400).json({ error: "Transaction verification failed" });
@@ -115,9 +118,9 @@ app.post("/initiate-transfer", authMiddleware, async (req, res) => {
 
 // AES decryption function
 async function decryptData(encryptedData, seed) {
-  try {
-    const CryptoJS = (await import("crypto-es")).default;
+  const CryptoJS = (await import("crypto-es")).default;
 
+  try {
     const key = await crypto.hashData(seed); // Derive a 256-bit key from seed
 
     // const decipher = cryptoModule.createDecipheriv("aes-256-ecb", key, null); // AES-ECB mode does not require an IV
