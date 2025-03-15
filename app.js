@@ -82,7 +82,7 @@ app.post("/initiate-transfer", authMiddleware, async (req, res) => {
       transactionData,
       transactionHash
     );
-    if (!transactionValid.error) {
+    if (transactionValid.error) {
       return res.status(400).json({ error: "Transaction verification failed" });
     }
 
