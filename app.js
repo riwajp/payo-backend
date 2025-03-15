@@ -5,7 +5,6 @@ const cors = require("cors");
 //utilities functions and middleware files=========================================
 const db = require("./utils/db-utils");
 const crypto = require("./utils/crypto-utils");
-const CryptoJS = import("crypto-es").default;
 
 require("dotenv").config();
 
@@ -115,6 +114,9 @@ app.post("/initiate-transfer", authMiddleware, async (req, res) => {
 // AES decryption function
 async function decryptData(encryptedData, seed) {
   try {
+    const CryptoJS = (await import("crypto-es")).default;
+    console.log(await import("crypto-es"));
+    console.log(CryptoJS);
     const key = await crypto.hashData(seed); // Derive a 256-bit key from seed
 
     // const decipher = cryptoModule.createDecipheriv("aes-256-ecb", key, null); // AES-ECB mode does not require an IV

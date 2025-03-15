@@ -13,7 +13,6 @@ const hashData = async (plainText) => {
 };
 
 const isHashCorrect = async (plainText, hashedText) => {
-
   return (await hashData(plainText)) == hashedText;
 };
 
@@ -40,14 +39,14 @@ const verifyTransaction = async (transactionData, transactionHash) => {
   console.log("helklo112222222222211");
   if (transactionData.timestamp > currentTime)
     return { error: "Future timestamp" };
-console.log("helklo11133333333333333331");
+  console.log("helklo11133333333333333331");
 
   if (user.latestTransactionTimestamp >= transactionData.timestamp)
     return { error: "Expired transaction (transaction overridden)" };
 
-  console.log("asssssssssssss",currentTime - transactionData.timestamp )
+  console.log("asssssssssssss", currentTime - transactionData.timestamp);
 
-  if (currentTime - transactionData.timestamp > 15000)
+  if (currentTime - transactionData.timestamp > 30000)
     return { error: "Expired transaction (timestamp expiration)" };
 
   if (user.currentBalance < transactionData.amount)
